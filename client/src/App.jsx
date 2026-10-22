@@ -1,19 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Card from "./Card.jsx";
 
-const cards = [
-  { name: "Dragão de Cobalto", type: "Criatura", attack: 7, defense: 5 },
-  { name: "Guardiã das Marés", type: "Criatura", attack: 4, defense: 8 },
-  { name: "Rito de Ferro", type: "Feitiço", attack: 0, defense: 0 },
-  { name: "Sentinela de Âmbar", type: "Criatura", attack: 6, defense: 6 },
-  { name: "Eco do Vazio", type: "Feitiço", attack: 0, defense: 0 },
-];
-
 function App() {
+  const [cards, setCards] = useState([]);
   const [filter, setFilter] = useState("Todas");
   const [search, setSearch] = useState("");
   const [randomCard, setRandomCard] = useState(null);
   const [sorted, setSorted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/api/cartas")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => setCards(data))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   let visible = cards
     .filter((card) => filter === "Todas" || card.type === filter)
@@ -25,6 +31,24 @@ function App() {
 
   function pickRandom() {
     setRandomCard(cards[Math.floor(Math.random() * cards.length)]);
+  }
+
+  if (loading) {
+    return (
+      <main>
+        <h1>A minha coleção</h1>
+        <p>A carregar…</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main>
+        <h1>A minha coleção</h1>
+        <p>Não foi possível carregar as cartas ({error}).</p>
+      </main>
+    );
   }
 
   return (
